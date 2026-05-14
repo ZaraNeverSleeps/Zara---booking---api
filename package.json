@@ -1,4 +1,4 @@
-"name": "zara-never-sleeps-booking-api",
+"name": "zara-booking-api",
   "version": "1.0.0",
   "description": "Calendly middleware for Zara Never Sleeps",
   "main": "index.js",
@@ -9,3 +9,5 @@
     "axios": "^1.6.0",
     "cors": "^2.8.5",
     "express": "^4.18.2"
+  }
+}
