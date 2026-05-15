@@ -62,12 +62,10 @@ app.post('/availability', async (req, res) => {
     }));
 
     res.json({
-      success: true,
-      available_slots: slots,
-      message: slots.length > 0
-        ? `I have ${slots.length} available slots. The first available is ${slots[0].readable}.`
-        : 'No available slots in the next 7 days.'
-    });
+      result: slots.length > 0
+    ? `Here are the next available slots: ${slots.map(s => s.readable).join(', ')}`
+    : 'No available slots in the next 7 days.'
+});
   } catch (err) {
     console.error(err.response?.data || err.message);
     res.status(500).json({ success: false, error: err.message });
