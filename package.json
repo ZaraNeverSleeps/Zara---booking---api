@@ -9,6 +9,9 @@
   "dependencies": {
     "axios": "^1.6.0",
     "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "googleapis": "^140.0.0"
   }
 }
+Commit that, wait 60 seconds for Render to redeploy, then make a test call! 🚀
+This should fix it — Render will now install googleapis and the Google Calendar booking will work! 🎯
