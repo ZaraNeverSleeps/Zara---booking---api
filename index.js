@@ -3,9 +3,17 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
+const { google } = require('googleapis');
 
-const CALENDLY_TOKEN = 'eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzc5MTAwNjkyLCJqdGkiOiJlMTU1MzQ1Yy1lMGJkLTRiNDgtYmVhYS0zNzU4MmM0ODA1M2YiLCJ1c2VyX3V1aWQiOiJjMTAxMzNiMC0xNWVlLTRhODEtYWMxZS1iMDg2N2I5MDQ4ZTUiLCJzY29wZSI6ImF2YWlsYWJpbGl0eTpyZWFkIGF2YWlsYWJpbGl0eTp3cml0ZSBldmVudF90eXBlczpyZWFkIGV2ZW50X3R5cGVzOndyaXRlIGxvY2F0aW9uczpyZWFkIHJvdXRpbmdfZm9ybXM6cmVhZCBzaGFyZXM6d3JpdGUgc2NoZWR1bGVkX2V2ZW50czpyZWFkIHNjaGVkdWxlZF9ldmVudHM6d3JpdGUgc2NoZWR1bGluZ19saW5rczp3cml0ZSBncm91cHM6cmVhZCBvcmdhbml6YXRpb25zOnJlYWQgb3JnYW5pemF0aW9uczp3cml0ZSB1c2VyczpyZWFkIGFjdGl2aXR5X2xvZzpyZWFkIGRhdGFfY29tcGxpYW5jZTp3cml0ZSBvdXRnb2luZ19jb21tdW5pY2F0aW9uczpyZWFkIHdlYmhvb2tzOnJlYWQgd2ViaG9va3M6d3JpdGUifQ.MZasOFVazSXRhU856aPBv4REdgKX4j2Q80GsRxK6bhKkYPvajz6NJuvYDQ9Rp1KdolerYZaV8QPeZqEcXG8g3g';
-const USER_UUID = 'c10133b0-15ee-4a81-ac1e-b0867b9048e5';
+const CALENDAR_ID = '5f861606ec8825900407483cce2e5fa9c1bd8689e3b389484b040f53b033fa81@group.calendar.google.com';
+
+const auth = new google.auth.GoogleAuth({
+  credentials: {
+    client_email: 'zara-calendar@zara-never-sleeps.iam.gserviceaccount.com',
+    private_key: '-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC49N7JxeDno2uU\nPjdr/gZG/YEiVinpa44V0ktNnDL8omj6BQQkqT7vbCJnqsGEHOTiFYc3aCyuVV/f\n0SqbJM6Bw1nOIe6PunPbiIkBmNM0uwkTDigcVAgvCv1NI3KLgAVqbx28Na8nRlyM\nYhDHwh7q0wbSQ9Q5715JB+9vnw6QzCGM/tHc4GfZ8LpyFJfAWjZ+QzbRqbkHhSjE\n0zan7U5bvlhXyQtq/wS+K2xZt9iOj8qfgpBsOrAw1Lo07MuWvL1Td8XfnduqkOUL\n4oQsPZBMciS3Wx+RbaIHNA5AutlAaM/E3yYDX96lE3Vk8iMuftuS678XL7rYasAe\nlllNG9ejAgMBAAECggEAV5JpYfO1FzgDGb+TkihGZJpm6BEP6xsnvSFC0k5gvclQ\nFwEFAy63Q7lZWOg6lAjyPjGfQharASgfKuPoXmjA9iO+g6EBSUAo1wsAg6cOaWsd\nUs5jI3aOIWf8oudjtrU42zodRB3O/rOL4lQUSeCZrumX0zqWY4/4fm+paJpQ1TFj\nqtMTCoOCyo4SgBshbefErr+Vhlv+9UJTSy9mQyNOq8yW+G5W3t7qf7sMnxvmsCMj\n/ErtSvFQLhm+3GQDE4QC/pxthK8n7TtLz4njbvL3dmeBo7iEAJsyRKnzgMcUddT8\nj9LSDNDIxN7GOISiGOojzLy7PJh5FwIKF3Ub3sUJ8QKBgQDZpTEfSXx/7WkuhzPh\nLVUaznAlmC4+x+Ik1QqeXgoX+fyD48iamocsMXpIYFaQDpOJe0gwaPTsuC7wH29d\nQJ2IW920FiSjhS9oEi4YwcxJ7g8+6iz2EgbgKxljU7KCP+7LeHCjr5sXGkqiMMWD\ndhfMitqpSQ0KKU/bZhMCJZ1LDwKBgQDZjPbIuOxvG/XXZ31zuT2urrd+RkpYftJh\n/do89K8sKL0awHxUZB0EiJ7Bpfvf+JpbpTw5+yIIDQBNJMMMsT5J+7cTYNtfrV10\nG6GvE3eCL91HbD2Xj5x1RGZeeYKYiHFI8vTWg5iDURqKk3BvOuaABHLl+g+zehBw\nlIyefEf6LQKBgQCuXQF1p1Huyyyw8fBGPiMoTqrZ84lZEpnCGEthhMVhYA1FPH/C\nHHqelST6RvQShRr90Z6L6goOe6BfD1AQzWtnivGbDQJdXp4UKjxz6Q7ZS7c7GDDd\nEqQfg2fbg3pHjyCoMd1LxaviXlXcimYyY7G9VKDJbpTbxy0LAEPKPIg/UQKBgQCs\n49UgMa5corjehfVyKW32zA0xgkUFTUx+6dItjTtFed7HSt/D5YgWGUkplnK0TQrG\n+GsDnSwvf72UkTmddaKOA0g8U0YkJE/XvTniPDNGuCk/4KqWL2Bk5YYBYMnD1PNK\nySKA9DYZbjQMmx3Il+OlK2PwlqkxtjkobzXNofFFxQKBgQCvu4L/SjcDHfz9X0Vk\n/8gzuopAi9iCLmXv+3acCEeFX9Ww44d4KkoSyxSG7FyJUEjTDxfp80k9laN++WXC\nqMwFstCmPaEVaLWsvvsQVNYbknsThiT5az4tSoIsNDlWCp62IfN7oj8PpGjsxbhB\njmW9ihip2YHLqwvbJ3hsGLDa/A==\n-----END PRIVATE KEY-----\n'
+  },
+  scopes: ['https://www.googleapis.com/auth/calendar']
+});
 
 function parsePreferredTime(preferredTime) {
   const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -22,22 +30,21 @@ function parsePreferredTime(preferredTime) {
   }
 
   let targetDate = new Date(now);
-  for (let d = 0; d < 7; d++) {
+  for (let d = 1; d < 8; d++) {
     const dayName = days[(now.getDay() + d) % 7];
     if (text.includes(dayName)) {
       targetDate = new Date(now);
-      targetDate.setDate(now.getDate() + (d === 0 ? 7 : d));
+      targetDate.setDate(now.getDate() + d);
       break;
     }
   }
 
-  // Handle "next tuesday" etc
   if (text.includes('next')) {
     targetDate.setDate(targetDate.getDate() + 7);
   }
 
   targetDate.setHours(hour, 0, 0, 0);
-  return targetDate.toISOString();
+  return targetDate;
 }
 
 app.get('/', (req, res) => {
@@ -54,74 +61,12 @@ app.post('/book', async (req, res) => {
   const { name, email, preferred_time, phone, stylist } = req.body;
 
   try {
-    const appointmentTime = parsePreferredTime(preferred_time || '');
-    const appointmentDate = new Date(appointmentTime);
-    const readableDate = appointmentDate.toLocaleDateString('en-GB', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
-    const readableTime = appointmentDate.toLocaleTimeString('en-GB', {
-      hour: '2-digit', minute: '2-digit'
-    });
+    const appointmentDate = parsePreferredTime(preferred_time || '');
+    const endDate = new Date(appointmentDate.getTime() + 60 * 60 * 1000);
 
-    res.json({
-      result: `Perfect! I have booked ${name} for ${readableDate} at ${readableTime}${stylist ? ' with ' + stylist : ''}. A confirmation will be sent to ${email}. We look forward to seeing you!`,
-      booking: {
-        name, email, phone, stylist,
-        datetime: appointmentTime,
-        readable: `${readableDate} at ${readableTime}`
-      }
-    });
-  } catch (err) {
-    console.error('Booking error:', err);
-    res.json({
-      result: `Perfect! I have booked ${name} for ${preferred_time}${stylist ? ' with ' + stylist : ''}. A confirmation will be sent to ${email}. We look forward to seeing you!`
-    });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Zara booking server running on port ${PORT}`));
-Commit it, wait 60 seconds for Render to deploy, then test a call! 🚀
-Go to lunch after committing — it'll be deployed by the time you're back! 🍽️Sonnet 4.6
-  });
-});
-
-app.post('/book', async (req, res) => {
-  const { name, email, preferred_time } = req.body;
-  
-  try {
-    // Get event types
-    const etRes = await fetch(`https://api.calendly.com/event_types?user=https://api.calendly.com/users/${USER_UUID}`, {
-      headers: { 'Authorization': `Bearer ${CALENDLY_TOKEN}` }
-    });
-    const etData = await etRes.json();
-    const eventTypeUri = etData.collection[0].uri;
-
-    // Create scheduling link for this invitee
-    const linkRes = await fetch('https://api.calendly.com/scheduling_links', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CALENDLY_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        max_event_count: 1,
-        owner: eventTypeUri,
-        owner_type: 'EventType'
-      })
-    });
-    const linkData = await linkRes.json();
-    
-    res.json({
-      result: `Perfect! I have booked ${name} for ${preferred_time}. A confirmation will be sent to ${email}. We look forward to seeing you!`
-    });
-  } catch (err) {
-    console.error('Booking error:', err);
-    res.json({
-      result: `Perfect! I have booked ${name} for ${preferred_time}. A confirmation will be sent to ${email}. We look forward to seeing you!`
-    });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Zara booking server running on port ${PORT}`));
+    const calendar = google.calendar({ version: 'v3', auth });
+    await calendar.events.insert({
+      calendarId: CALENDAR_ID,
+      requestBody: {
+        summary: `Hair Appointment - ${name}`,
+        description: `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nStylist: ${stylist || 'Any'Sonnet 4.6
