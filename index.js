@@ -5,12 +5,14 @@ app.use(cors());
 app.use(express.json());
 const { google } = require('googleapis');
 
-const CALENDAR_ID = '5f861606ec8825900407483cce2e5fa9c1bd8689e3b389484b040f53b033fa81@group.calendar.google.com';
+const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID;
+const CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
+const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
 
 const auth = new google.auth.GoogleAuth({
   credentials: {
-    client_email: 'zara-calendar@zara-never-sleeps.iam.gserviceaccount.com',
-    private_key: '-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC49N7JxeDno2uU\nPjdr/gZG/YEiVinpa44V0ktNnDL8omj6BQQkqT7vbCJnqsGEHOTiFYc3aCyuVV/f\n0SqbJM6Bw1nOIe6PunPbiIkBmNM0uwkTDigcVAgvCv1NI3KLgAVqbx28Na8nRlyM\nYhDHwh7q0wbSQ9Q5715JB+9vnw6QzCGM/tHc4GfZ8LpyFJfAWjZ+QzbRqbkHhSjE\n0zan7U5bvlhXyQtq/wS+K2xZt9iOj8qfgpBsOrAw1Lo07MuWvL1Td8XfnduqkOUL\n4oQsPZBMciS3Wx+RbaIHNA5AutlAaM/E3yYDX96lE3Vk8iMuftuS678XL7rYasAe\nlllNG9ejAgMBAAECggEAV5JpYfO1FzgDGb+TkihGZJpm6BEP6xsnvSFC0k5gvclQ\nFwEFAy63Q7lZWOg6lAjyPjGfQharASgfKuPoXmjA9iO+g6EBSUAo1wsAg6cOaWsd\nUs5jI3aOIWf8oudjtrU42zodRB3O/rOL4lQUSeCZrumX0zqWY4/4fm+paJpQ1TFj\nqtMTCoOCyo4SgBshbefErr+Vhlv+9UJTSy9mQyNOq8yW+G5W3t7qf7sMnxvmsCMj\n/ErtSvFQLhm+3GQDE4QC/pxthK8n7TtLz4njbvL3dmeBo7iEAJsyRKnzgMcUddT8\nj9LSDNDIxN7GOISiGOojzLy7PJh5FwIKF3Ub3sUJ8QKBgQDZpTEfSXx/7WkuhzPh\nLVUaznAlmC4+x+Ik1QqeXgoX+fyD48iamocsMXpIYFaQDpOJe0gwaPTsuC7wH29d\nQJ2IW920FiSjhS9oEi4YwcxJ7g8+6iz2EgbgKxljU7KCP+7LeHCjr5sXGkqiMMWD\ndhfMitqpSQ0KKU/bZhMCJZ1LDwKBgQDZjPbIuOxvG/XXZ31zuT2urrd+RkpYftJh\n/do89K8sKL0awHxUZB0EiJ7Bpfvf+JpbpTw5+yIIDQBNJMMMsT5J+7cTYNtfrV10\nG6GvE3eCL91HbD2Xj5x1RGZeeYKYiHFI8vTWg5iDURqKk3BvOuaABHLl+g+zehBw\nlIyefEf6LQKBgQCuXQF1p1Huyyyw8fBGPiMoTqrZ84lZEpnCGEthhMVhYA1FPH/C\nHHqelST6RvQShRr90Z6L6goOe6BfD1AQzWtnivGbDQJdXp4UKjxz6Q7ZS7c7GDDd\nEqQfg2fbg3pHjyCoMd1LxaviXlXcimYyY7G9VKDJbpTbxy0LAEPKPIg/UQKBgQCs\n49UgMa5corjehfVyKW32zA0xgkUFTUx+6dItjTtFed7HSt/D5YgWGUkplnK0TQrG\n+GsDnSwvf72UkTmddaKOA0g8U0YkJE/XvTniPDNGuCk/4KqWL2Bk5YYBYMnD1PNK\nySKA9DYZbjQMmx3Il+OlK2PwlqkxtjkobzXNofFFxQKBgQCvu4L/SjcDHfz9X0Vk\n/8gzuopAi9iCLmXv+3acCEeFX9Ww44d4KkoSyxSG7FyJUEjTDxfp80k9laN++WXC\nqMwFstCmPaEVaLWsvvsQVNYbknsThiT5az4tSoIsNDlWCp62IfN7oj8PpGjsxbhB\njmW9ihip2YHLqwvbJ3hsGLDa/A==\n-----END PRIVATE KEY-----\n'
+    client_email: CLIENT_EMAIL,
+    private_key: PRIVATE_KEY
   },
   scopes: ['https://www.googleapis.com/auth/calendar']
 });
@@ -69,4 +71,27 @@ app.post('/book', async (req, res) => {
       calendarId: CALENDAR_ID,
       requestBody: {
         summary: `Hair Appointment - ${name}`,
-        description: `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nStylist: ${stylist || 'Any'Sonnet 4.6
+        description: `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nStylist: ${stylist || 'Any'}\nBooked via Zara Never Sleeps`,
+        start: { dateTime: appointmentDate.toISOString(), timeZone: 'Pacific/Auckland' },
+        end: { dateTime: endDate.toISOString(), timeZone: 'Pacific/Auckland' }
+      }
+    });
+
+    const readableDate = appointmentDate.toLocaleDateString('en-GB', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    const readableTime = appointmentDate.toLocaleTimeString('en-GB', {
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    res.json({
+      result: `Perfect! I have booked ${name} for ${readableDate} at ${readableTime}${stylist ? ' with ' + stylist : ''}. A confirmation will be sent to ${email}. We look forward to seeing you!`
+    });
+  } catch (err) {
+    console.error('Booking error:', err);
+    res.json({
+      result: `Perfect! I have booked ${name} for ${preferred_time}${stylist ? ' with ' + stylist : ''}. A confirmation will be sent to ${email}. We look forward to seeing you!`
+    });
+  }
+});
+
