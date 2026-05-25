@@ -20,6 +20,7 @@ function parsePreferredTime(preferredTime) {
   const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const now = new Date();
   const text = preferredTime.toLowerCase();
+
   let hour = 9;
   const timeMatch = text.match(/(\d+)(?::(\d+))?\s*(am|pm)?/);
   if (timeMatch) {
@@ -28,18 +29,21 @@ function parsePreferredTime(preferredTime) {
     if (meridiem === 'pm' && hour !== 12) hour += 12;
     if (meridiem === 'am' && hour === 12) hour = 0;
   }
+
   let targetDate = new Date(now);
-  for (let d = 1; d < 8; d++) {
-    const dayName = days[(now.getDay() + d) % 7];
+  let daysToAdd = 7;
+
+  for (let d = 0; d < 7; d++) {
+    const dayName = days[d];
     if (text.includes(dayName)) {
-      targetDate = new Date(now);
-      targetDate.setDate(now.getDate() + d);
+      const todayIndex = now.getDay();
+      daysToAdd = (d - todayIndex + 7) % 7;
+      if (daysToAdd === 0 || text.includes('next')) daysToAdd += 7;
       break;
     }
   }
-  if (text.includes('next')) {
-    targetDate.setDate(targetDate.getDate() + 7);
-  }
+
+  targetDate.setDate(now.getDate() + daysToAdd);
   targetDate.setHours(hour, 0, 0, 0);
   return targetDate;
 }
