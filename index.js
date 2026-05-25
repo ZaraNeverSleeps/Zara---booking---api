@@ -30,12 +30,12 @@ function parsePreferredTime(preferredTime) {
   const text = preferredTime.toLowerCase();
 
   let hour = 9;
-  const timeMatch = text.match(/(\d+)(?::(\d+))?\s*(am|pm)?/);
+  const timeMatch = text.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
   if (timeMatch) {
     hour = parseInt(timeMatch[1]);
     const meridiem = timeMatch[3];
-    if (meridiem === 'pm' && hour !== 12) hour += 12;
-    if (meridiem === 'am' && hour === 12) hour = 0;
+    if (meridiem.toLowerCase() === 'pm' && hour !== 12) hour += 12;
+    if (meridiem.toLowerCase() === 'am' && hour === 12) hour = 0;
   }
 
   let targetDate = new Date(now);
