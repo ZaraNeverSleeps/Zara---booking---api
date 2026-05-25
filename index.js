@@ -31,14 +31,14 @@ function parsePreferredTime(preferredTime) {
   }
 
   let targetDate = new Date(now);
-  let daysToAdd = 7;
+  let daysToAdd = 1;
 
   for (let d = 0; d < 7; d++) {
     const dayName = days[d];
     if (text.includes(dayName)) {
       const todayIndex = now.getDay();
       daysToAdd = (d - todayIndex + 7) % 7;
-      if (daysToAdd === 0 || text.includes('next')) daysToAdd += 7;
+      if (daysToAdd <= 0 || text.includes('next')) daysToAdd += 7;
       break;
     }
   }
