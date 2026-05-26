@@ -16,7 +16,6 @@ const credentials = {
 };
 
 const CALENDAR_ID = '5f861606ec8825900407483cce2e5fa9c1bd8689e3b389484b040f53b033fa81@group.calendar.google.com';
-const TIMEZONE = 'Pacific/Auckland';
 
 const auth = new google.auth.JWT(
   credentials.client_email,
@@ -32,20 +31,22 @@ function parsePreferredTime(preferredTime) {
   const timeMatch = text.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
   if (timeMatch) {
     hour = parseInt(timeMatch[1]);
-    const meridiem = timeMatch[3];
-    if (meridiem.toLowerCase() === 'pm' && hour !== 12) hour += 12;
-    if (meridiem.toLowerCase() === 'am' && hour === 12) hour = 0;
+    const meridiem = timeMatch[3].toLowerCase();
+    if (meridiem === 'pm' && hour !== 12) hour += 12;
+    if (meridiem === 'am' && hour === 12) hour = 0;
   }
 
-  const nowNZ = new Date(new Date().toLocaleString('en-US', { timeZone: TIMEZONE }));
-  let targetDate = new Date(nowNZ);
+  const nowNZ = new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' }));
+  let year = nowNZ.getFullYear();
+  let month = nowNZ.getMonth() + 1;
+  let day = nowNZ.getDate();
 
-  const dateNumMatch = text.match(/(\d+)(st|nd|rd|th)/);
+  const dateNumMatch = text.match(/(\d+)(?:st|nd|rd|th)/);
   if (dateNumMatch) {
-    const dayNum = parseInt(dateNumMatch[1]);
-    targetDate.setDate(dayNum);
-    if (targetDate <= nowNZ) {
-      targetDate.setMonth(targetDate.getMonth() + 1);
+    day = parseInt(dateNumMatch[1]);
+    if (day < nowNZ.getDate()) {
+      month = month + 1;
+      if (month > 12) { month = 1; year = year + 1; }
     }
   } else {
     const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -58,14 +59,15 @@ function parsePreferredTime(preferredTime) {
         break;
       }
     }
-    targetDate.setDate(nowNZ.getDate() + daysToAdd);
+    const futureDate = new Date(nowNZ);
+    futureDate.setDate(nowNZ.getDate() + daysToAdd);
+    year = futureDate.getFullYear();
+    month = futureDate.getMonth() + 1;
+    day = futureDate.getDate();
   }
 
-  targetDate.setHours(hour, 0, 0, 0);
-
-  const tzOffset = 12 * 60;
-  const utcDate = new Date(targetDate.getTime() - tzOffset * 60000);
-  return utcDate;
+  const pad = n => String(n).padStart(2, '0');
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:00:00`;
 }
 
 app.get('/', (req, res) => {
@@ -82,27 +84,29 @@ app.post('/book', async (req, res) => {
   const { name, email, preferred_time, phone, stylist } = req.body;
   console.log('Booking request:', JSON.stringify(req.body));
   try {
-    const appointmentDate = parsePreferredTime(preferred_time || '');
-    const endDate = new Date(appointmentDate.getTime() + 60 * 60 * 1000);
+    const dateTimeStr = parsePreferredTime(preferred_time || '');
+    console.log('Parsed datetime:', dateTimeStr);
+    const hour = parseInt(dateTimeStr.slice(11, 13));
+    const endHour = hour + 1;
+    const endDateTimeStr = dateTimeStr.slice(0, 11) + String(endHour).padStart(2, '0') + ':00:00';
+
     const calendar = google.calendar({ version: 'v3', auth });
     await calendar.events.insert({
       calendarId: CALENDAR_ID,
       requestBody: {
         summary: `Hair Appointment - ${name}`,
         description: `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nStylist: ${stylist || 'Any'}\nBooked via Zara Never Sleeps`,
-        start: { dateTime: appointmentDate.toISOString(), timeZone: TIMEZONE },
-        end: { dateTime: endDate.toISOString(), timeZone: TIMEZONE }
+        start: { dateTime: dateTimeStr, timeZone: 'Pacific/Auckland' },
+        end: { dateTime: endDateTimeStr, timeZone: 'Pacific/Auckland' }
       }
     });
-    const readableDate = appointmentDate.toLocaleDateString('en-GB', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      timeZone: TIMEZONE
-    });
-    const readableTime = appointmentDate.toLocaleTimeString('en-GB', {
-      hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE
-    });
+
+    const meridiem = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : hour;
+    const readableTime = `${displayHour}:00 ${meridiem}`;
+
     res.json({
-      result: `Perfect! I have booked ${name} for ${readableDate} at ${readableTime}${stylist ? ' with ' + stylist : ''}. A confirmation will be sent to ${email}. We look forward to seeing you!`
+      result: `Perfect! I have booked ${name} for ${preferred_time} at ${readableTime}${stylist ? ' with ' + stylist : ''}. A confirmation will be sent to ${email}. We look forward to seeing you!`
     });
   } catch (err) {
     console.error('Booking error:', err.message);
