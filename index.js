@@ -68,6 +68,7 @@ app.post('/availability', async (req, res) => {
 
 app.post('/book', async (req, res) => {
   const { name, email, preferred_time, phone, stylist } = req.body;
+  console.log('Booking request:', JSON.stringify(req.body));
   try {
     const appointmentDate = parsePreferredTime(preferred_time || '');
     const endDate = new Date(appointmentDate.getTime() + 60 * 60 * 1000);
