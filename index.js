@@ -27,18 +27,29 @@ const auth = new google.auth.JWT(
 function parsePreferredTime(preferredTime) {
   const text = preferredTime.toLowerCase();
 
-  // Remove ordinal date numbers first so they don't interfere with time parsing
-  const textWithoutDate = text.replace(/\d+(st|nd|rd|th)/g, '');
-
+  // Parse time - look for patterns like "2pm", "2:00 pm", "14:00"
   let hour = 9;
-  const timeMatch = textWithoutDate.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
-  if (timeMatch) {
-    hour = parseInt(timeMatch[1]);
-    const meridiem = timeMatch[3].toLowerCase();
+  
+  // Try "at X:XX am/pm" or "at X am/pm" pattern first
+  const atTimeMatch = text.match(/at\s+(\d+)(?::(\d+))?\s*(am|pm)/i);
+  if (atTimeMatch) {
+    hour = parseInt(atTimeMatch[1]);
+    const meridiem = atTimeMatch[3].toLowerCase();
     if (meridiem === 'pm' && hour !== 12) hour += 12;
     if (meridiem === 'am' && hour === 12) hour = 0;
+  } else {
+    // Try standalone time pattern but exclude ordinal numbers
+    const textWithoutOrdinals = text.replace(/\d+(?:st|nd|rd|th)/g, '');
+    const timeMatch = textWithoutOrdinals.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
+    if (timeMatch) {
+      hour = parseInt(timeMatch[1]);
+      const meridiem = timeMatch[3].toLowerCase();
+      if (meridiem === 'pm' && hour !== 12) hour += 12;
+      if (meridiem === 'am' && hour === 12) hour = 0;
+    }
   }
 
+  // Parse date
   const nowNZ = new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' }));
   let year = nowNZ.getFullYear();
   let month = nowNZ.getMonth() + 1;
@@ -85,7 +96,7 @@ app.post('/availability', async (req, res) => {
 
 app.post('/book', async (req, res) => {
   const { name, email, preferred_time, phone, stylist } = req.body;
-  console.log('Booking request:', JSON.stringify(req.body));
+  console.log('Booking request preferred_time:', preferred_time);
   try {
     const dateTimeStr = parsePreferredTime(preferred_time || '');
     console.log('Parsed datetime:', dateTimeStr);
