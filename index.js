@@ -16,6 +16,7 @@ const credentials = {
 };
 
 const CALENDAR_ID = '5f861606ec8825900407483cce2e5fa9c1bd8689e3b389484b040f53b033fa81@group.calendar.google.com';
+const TIMEZONE = 'Pacific/Auckland';
 
 const auth = new google.auth.JWT(
   credentials.client_email,
@@ -25,7 +26,6 @@ const auth = new google.auth.JWT(
 );
 
 function parsePreferredTime(preferredTime) {
-  const now = new Date();
   const text = preferredTime.toLowerCase();
 
   let hour = 9;
@@ -37,13 +37,14 @@ function parsePreferredTime(preferredTime) {
     if (meridiem.toLowerCase() === 'am' && hour === 12) hour = 0;
   }
 
-  let targetDate = new Date(now);
+  const nowNZ = new Date(new Date().toLocaleString('en-US', { timeZone: TIMEZONE }));
+  let targetDate = new Date(nowNZ);
 
   const dateNumMatch = text.match(/(\d+)(st|nd|rd|th)/);
   if (dateNumMatch) {
     const dayNum = parseInt(dateNumMatch[1]);
     targetDate.setDate(dayNum);
-    if (targetDate <= now) {
+    if (targetDate <= nowNZ) {
       targetDate.setMonth(targetDate.getMonth() + 1);
     }
   } else {
@@ -51,17 +52,20 @@ function parsePreferredTime(preferredTime) {
     let daysToAdd = 1;
     for (let d = 0; d < 7; d++) {
       if (text.includes(days[d])) {
-        const todayIndex = now.getDay();
+        const todayIndex = nowNZ.getDay();
         daysToAdd = (d - todayIndex + 7) % 7;
         if (daysToAdd <= 0 || text.includes('next')) daysToAdd += 7;
         break;
       }
     }
-    targetDate.setDate(now.getDate() + daysToAdd);
+    targetDate.setDate(nowNZ.getDate() + daysToAdd);
   }
 
   targetDate.setHours(hour, 0, 0, 0);
-  return targetDate;
+
+  const tzOffset = 12 * 60;
+  const utcDate = new Date(targetDate.getTime() - tzOffset * 60000);
+  return utcDate;
 }
 
 app.get('/', (req, res) => {
@@ -86,15 +90,16 @@ app.post('/book', async (req, res) => {
       requestBody: {
         summary: `Hair Appointment - ${name}`,
         description: `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nStylist: ${stylist || 'Any'}\nBooked via Zara Never Sleeps`,
-        start: { dateTime: appointmentDate.toISOString(), timeZone: 'Pacific/Auckland' },
-        end: { dateTime: endDate.toISOString(), timeZone: 'Pacific/Auckland' }
+        start: { dateTime: appointmentDate.toISOString(), timeZone: TIMEZONE },
+        end: { dateTime: endDate.toISOString(), timeZone: TIMEZONE }
       }
     });
     const readableDate = appointmentDate.toLocaleDateString('en-GB', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      timeZone: TIMEZONE
     });
     const readableTime = appointmentDate.toLocaleTimeString('en-GB', {
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE
     });
     res.json({
       result: `Perfect! I have booked ${name} for ${readableDate} at ${readableTime}${stylist ? ' with ' + stylist : ''}. A confirmation will be sent to ${email}. We look forward to seeing you!`
