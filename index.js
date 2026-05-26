@@ -34,6 +34,12 @@ function parsePreferredTime(preferredTime) {
     const meridiem = timeMatch[3].toLowerCase();
     if (meridiem === 'pm' && hour !== 12) hour += 12;
     if (meridiem === 'am' && hour === 12) hour = 0;
+  } else {
+    const timeMatchNoMeridiem = text.match(/at\s+(\d+)/i);
+    if (timeMatchNoMeridiem) {
+      hour = parseInt(timeMatchNoMeridiem[1]);
+      if (hour < 8) hour += 12;
+    }
   }
 
   const nowNZ = new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' }));
