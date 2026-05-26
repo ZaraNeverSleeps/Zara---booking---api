@@ -27,19 +27,16 @@ const auth = new google.auth.JWT(
 function parsePreferredTime(preferredTime) {
   const text = preferredTime.toLowerCase();
 
+  // Remove ordinal date numbers first so they don't interfere with time parsing
+  const textWithoutDate = text.replace(/\d+(st|nd|rd|th)/g, '');
+
   let hour = 9;
-  const timeMatch = text.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
+  const timeMatch = textWithoutDate.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
   if (timeMatch) {
     hour = parseInt(timeMatch[1]);
     const meridiem = timeMatch[3].toLowerCase();
     if (meridiem === 'pm' && hour !== 12) hour += 12;
     if (meridiem === 'am' && hour === 12) hour = 0;
-  } else {
-    const timeMatchNoMeridiem = text.match(/at\s+(\d+)/i);
-    if (timeMatchNoMeridiem) {
-      hour = parseInt(timeMatchNoMeridiem[1]);
-      if (hour < 8) hour += 12;
-    }
   }
 
   const nowNZ = new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' }));
