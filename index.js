@@ -25,7 +25,6 @@ const auth = new google.auth.JWT(
 );
 
 function parsePreferredTime(preferredTime) {
-  const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const now = new Date();
   const text = preferredTime.toLowerCase();
 
@@ -39,19 +38,28 @@ function parsePreferredTime(preferredTime) {
   }
 
   let targetDate = new Date(now);
-  let daysToAdd = 1;
 
-  for (let d = 0; d < 7; d++) {
-    const dayName = days[d];
-    if (text.includes(dayName)) {
-      const todayIndex = now.getDay();
-      daysToAdd = (d - todayIndex + 7) % 7;
-      if (daysToAdd <= 0 || text.includes('next')) daysToAdd += 7;
-      break;
+  const dateNumMatch = text.match(/(\d+)(st|nd|rd|th)/);
+  if (dateNumMatch) {
+    const dayNum = parseInt(dateNumMatch[1]);
+    targetDate.setDate(dayNum);
+    if (targetDate <= now) {
+      targetDate.setMonth(targetDate.getMonth() + 1);
     }
+  } else {
+    const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    let daysToAdd = 1;
+    for (let d = 0; d < 7; d++) {
+      if (text.includes(days[d])) {
+        const todayIndex = now.getDay();
+        daysToAdd = (d - todayIndex + 7) % 7;
+        if (daysToAdd <= 0 || text.includes('next')) daysToAdd += 7;
+        break;
+      }
+    }
+    targetDate.setDate(now.getDate() + daysToAdd);
   }
 
-  targetDate.setDate(now.getDate() + daysToAdd);
   targetDate.setHours(hour, 0, 0, 0);
   return targetDate;
 }
